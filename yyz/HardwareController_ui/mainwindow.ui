@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>1289</width><height>897</height></rect>
+  </property>
+  <property name="windowTitle"><string>智能家居控制系统</string></property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="centralLayout">
+    <property name="spacing"><number>0</number></property>
+    <property name="leftMargin"><number>0</number></property>
+    <property name="topMargin"><number>0</number></property>
+    <property name="rightMargin"><number>0</number></property>
+    <property name="bottomMargin"><number>0</number></property>
+    <item>
+     <widget class="QStackedWidget" name="stackedWidget">
+      <property name="styleSheet">
+       <string notr="true">QStackedWidget { background-color: #f0f4f8; }</string>
+      </property>
+
+      <!-- ===================================================== -->
+      <!-- 页面 0：磁贴主页                                       -->
+      <!-- ===================================================== -->
+      <widget class="QWidget" name="page_home">
+       <layout class="QVBoxLayout" name="homeMainLayout">
+        <property name="spacing"><number>12</number></property>
+        <property name="leftMargin"><number>16</number></property>
+        <property name="topMargin"><number>12</number></property>
+        <property name="rightMargin"><number>16</number></property>
+        <property name="bottomMargin"><number>16</number></property>
+
+        <!-- 顶部状态栏 -->
+        <item>
+         <layout class="QHBoxLayout" name="statusBarLayout">
+          <property name="spacing"><number>24</number></property>
+          <item>
+           <widget class="QLabel" name="status_temp">
+            <property name="font"><font><pointsize>14</pointsize></font></property>
+            <property name="text"><string>温度: -- °C</string></property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="status_hum">
+            <property name="font"><font><pointsize>14</pointsize></font></property>
+            <property name="text"><string>湿度: -- %</string></property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="status_light">
+            <property name="font"><font><pointsize>14</pointsize></font></property>
+            <property name="text"><string>光照: --</string></property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="status_fan">
+            <property name="font"><font><pointsize>14</pointsize></font></property>
+            <property name="text"><string>风扇: --</string></property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="statusSpacer">
+            <property name="orientation"><enum>Qt::Horizontal</enum></property>
+            <property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_switch_to_monitor">
+            <property name="minimumSize"><size><width>150</width><height>45</height></size></property>
+            <property name="font"><font><pointsize>12</pointsize></font></property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{border:none;border-radius:8px;background:#1976d2;color:#ffffff;padding:6px 14px;}
+QPushButton:hover{background:#1565c0;}</string>
+            </property>
+            <property name="text"><string>☁ 云端监控</string></property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+
+        <!-- 磁贴区：2 行 x 4 列 -->
+        <item>
+         <layout class="QGridLayout" name="tileLayout">
+          <property name="spacing"><number>12</number></property>
+
+          <item row="0" column="0">
+           <widget class="QPushButton" name="cam">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{border:none;border-radius:14px;background:#ffffff;}
+QPushButton:hover{background:#e8f0fe;}
+QPushButton:pressed{background:#d0e1f7;}</string>
+            </property>
+            <property name="text"><string/></property>
+            <property name="icon">
+             <iconset resource="images.qrc">
+              <normaloff>:/images/cam.png</normaloff>:/images/cam.png</iconset>
+            </property>
+            <property name="iconSize"><size><width>150</width><height>150</height></size></property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QPushButton" name="light">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{border:none;border-radius:14px;background:#ffffff;}
+QPushButton:hover{background:#e8f0fe;}
+QPushButton:pressed{background:#d0e1f7;}</string>
+            </property>
+            <property name="text"><string/></property>
+            <property name="icon">
+             <iconset resource="images.qrc">
+              <normaloff>:/images/light.png</normaloff>:/images/light.png</iconset>
+            </property>
+            <property name="iconSize"><size><width>150</width><height>150</height></size></property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QPushButton" name="fan_pushbutton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{border:none;border-radius:14px;background:#ffffff;}
+QPushButton:hover{background:#e8f0fe;}
+QPushButton:pressed{background:#d0e1f7;}</string>
+            </property>
+            <property name="text"><string/></property>
+            <property name="icon">
+             <iconset resource="images.qrc">
+              <normaloff>:/images/fan.png</normaloff>:/images/fan.png</iconset>
+            </property>
+            <property name="iconSize"><size><width>150</width><height>150</height></size></property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QPushButton" name="alarm_button">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{border:none;border-radius:14px;background:#fff3e0;font-size:60pt;}
+QPushButton:hover{background:#ffe0b2;}
+QPushButton:pressed{background:#ffcc80;}</string>
+            </property>
+            <property name="text"><string>🔔</string></property>
+           </widget>
+          </item>
+
+          <item row="1" column="0">
+           <widget class="QPushButton" name="home_mode_btn">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{border:none;border-radius:14px;background:#e8f5e9;font-size:18pt;font-weight:bold;color:#2e7d32;}
+QPushButton:hover{background:#c8e6c9;}
+QPushButton:pressed{background:#a5d6a7;}</string>
+            </property>
+            <property name="text"><string>🏠 回家模式</string></property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QPushButton" name="movie_mode_btn">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{border:none;border-radius:14px;background:#ede7f6;font-size:18pt;font-weight:bold;color:#4527a0;}
+QPushButton:hover{background:#d1c4e9;}
+QPushButton:pressed{background:#b39ddb;}</string>
+            </property>
+            <property name="text"><string>🎬 观影模式</string></property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QPushButton" name="away_mode_btn">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{border:none;border-radius:14px;background:#e3f2fd;font-size:18pt;font-weight:bold;color:#0d47a1;}
+QPushButton:hover{background:#bbdefb;}
+QPushButton:pressed{background:#90caf9;}</string>
+            </property>
+            <property name="text"><string>🚪 离家模式</string></property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QPushButton" name="all_off_btn">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton{border:none;border-radius:14px;background:#ffebee;font-size:18pt;font-weight:bold;color:#b71c1c;}
+QPushButton:hover{background:#ffcdd2;}
+QPushButton:pressed{background:#ef9a9a;}</string>
+            </property>
+            <property name="text"><string>⭕ 全部关闭</string></property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+
+      <!-- ===================================================== -->
+      <!-- 页面 1：MQTT 云端监控页                                 -->
+      <!-- ===================================================== -->
+      <widget class="QWidget" name="page_monitor">
+       <widget class="QPushButton" name="btn_switch_to_home">
+        <property name="geometry"><rect><x>30</x><y>20</y><width>140</width><height>45</height></rect></property>
+        <property name="font"><font><pointsize>12</pointsize></font></property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton{border:none;border-radius:8px;background:#607d8b;color:#fff;padding:6px 14px;}
+QPushButton:hover{background:#546e7a;}</string>
+        </property>
+        <property name="text"><string>← 返回主页</string></property>
+       </widget>
+
+       <!-- MQTT 连接区 -->
+       <widget class="QLabel" name="label">
+        <property name="geometry"><rect><x>30</x><y>90</y><width>70</width><height>35</height></rect></property>
+        <property name="font"><font><pointsize>12</pointsize></font></property>
+        <property name="text"><string>IP:</string></property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit">
+        <property name="geometry"><rect><x>110</x><y>90</y><width>240</width><height>35</height></rect></property>
+       </widget>
+       <widget class="QLabel" name="label_2">
+        <property name="geometry"><rect><x>30</x><y>140</y><width>70</width><height>35</height></rect></property>
+        <property name="font"><font><pointsize>12</pointsize></font></property>
+        <property name="text"><string>Port:</string></property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_2">
+        <property name="geometry"><rect><x>110</x><y>140</y><width>240</width><height>35</height></rect></property>
+       </widget>
+       <widget class="QPushButton" name="pushButton">
+        <property name="geometry"><rect><x>370</x><y>90</y><width>110</width><height>85</height></rect></property>
+        <property name="font"><font><pointsize>12</pointsize></font></property>
+        <property name="text"><string>连接</string></property>
+       </widget>
+       <widget class="QLabel" name="label_3">
+        <property name="geometry"><rect><x>30</x><y>200</y><width>80</width><height>35</height></rect></property>
+        <property name="font"><font><pointsize>12</pointsize></font></property>
+        <property name="text"><string>Publish:</string></property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_3">
+        <property name="geometry"><rect><x>110</x><y>200</y><width>240</width><height>35</height></rect></property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="geometry"><rect><x>370</x><y>200</y><width>110</width><height>35</height></rect></property>
+        <property name="font"><font><pointsize>12</pointsize></font></property>
+        <property name="text"><string>开灯</string></property>
+       </widget>
+       <widget class="QLabel" name="label_4">
+        <property name="geometry"><rect><x>30</x><y>250</y><width>80</width><height>35</height></rect></property>
+        <property name="font"><font><pointsize>12</pointsize></font></property>
+        <property name="text"><string>Subscribe:</string></property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_4">
+        <property name="geometry"><rect><x>110</x><y>250</y><width>240</width><height>35</height></rect></property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_3">
+        <property name="geometry"><rect><x>370</x><y>250</y><width>110</width><height>35</height></rect></property>
+        <property name="font"><font><pointsize>12</pointsize></font></property>
+        <property name="text"><string>订阅</string></property>
+       </widget>
+
+       <widget class="QTextEdit" name="textEdit">
+        <property name="geometry"><rect><x>30</x><y>310</y><width>450</width><height>370</height></rect></property>
+        <property name="font"><font><family>Monospace</family><pointsize>10</pointsize></font></property>
+       </widget>
+
+       <!-- 传感器 + 风扇控制 -->
+       <widget class="QLabel" name="label_fan">
+        <property name="geometry"><rect><x>540</x><y>100</y><width>110</width><height>50</height></rect></property>
+        <property name="font"><font><pointsize>14</pointsize></font></property>
+        <property name="text"><string>风扇速度:</string></property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_minus">
+        <property name="geometry"><rect><x>660</x><y>100</y><width>50</width><height>50</height></rect></property>
+        <property name="font"><font><pointsize>18</pointsize><weight>75</weight><bold>true</bold></font></property>
+        <property name="text"><string>-</string></property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_fan">
+        <property name="geometry"><rect><x>720</x><y>100</y><width>100</width><height>50</height></rect></property>
+        <property name="font"><font><pointsize>18</pointsize><weight>75</weight><bold>true</bold></font></property>
+        <property name="text"><string>150</string></property>
+        <property name="alignment"><set>Qt::AlignCenter</set></property>
+        <property name="readOnly"><bool>true</bool></property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_plus">
+        <property name="geometry"><rect><x>830</x><y>100</y><width>50</width><height>50</height></rect></property>
+        <property name="font"><font><pointsize>18</pointsize><weight>75</weight><bold>true</bold></font></property>
+        <property name="text"><string>+</string></property>
+       </widget>
+
+       <widget class="QLabel" name="label_temp">
+        <property name="geometry"><rect><x>540</x><y>200</y><width>110</width><height>50</height></rect></property>
+        <property name="font"><font><pointsize>14</pointsize></font></property>
+        <property name="text"><string>温度(°C):</string></property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_temp">
+        <property name="geometry"><rect><x>660</x><y>200</y><width>220</width><height>50</height></rect></property>
+        <property name="font"><font><pointsize>20</pointsize><weight>75</weight><bold>true</bold></font></property>
+        <property name="alignment"><set>Qt::AlignCenter</set></property>
+        <property name="readOnly"><bool>true</bool></property>
+       </widget>
+
+       <widget class="QLabel" name="label_hum">
+        <property name="geometry"><rect><x>540</x><y>290</y><width>110</width><height>50</height></rect></property>
+        <property name="font"><font><pointsize>14</pointsize></font></property>
+        <property name="text"><string>湿度(%):</string></property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_hum">
+        <property name="geometry"><rect><x>660</x><y>290</y><width>220</width><height>50</height></rect></property>
+        <property name="font"><font><pointsize>20</pointsize><weight>75</weight><bold>true</bold></font></property>
+        <property name="alignment"><set>Qt::AlignCenter</set></property>
+        <property name="readOnly"><bool>true</bool></property>
+       </widget>
+
+       <widget class="QLabel" name="label_light">
+        <property name="geometry"><rect><x>540</x><y>380</y><width>110</width><height>50</height></rect></property>
+        <property name="font"><font><pointsize>14</pointsize></font></property>
+        <property name="text"><string>光照(lux):</string></property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_light">
+        <property name="geometry"><rect><x>660</x><y>380</y><width>220</width><height>50</height></rect></property>
+        <property name="font"><font><pointsize>20</pointsize><weight>75</weight><bold>true</bold></font></property>
+        <property name="alignment"><set>Qt::AlignCenter</set></property>
+        <property name="readOnly"><bool>true</bool></property>
+       </widget>
+      </widget>
+
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources>
+  <include location="images.qrc"/>
+ </resources>
+ <connections/>
+</ui>
