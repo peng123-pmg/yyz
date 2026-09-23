@@ -2,7 +2,12 @@
 #include "ui_mainwindow.h"
 #include <QMessageBox>
 #include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
 
+// ============================================================
+// 构造 / 析构
+// ============================================================
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -22,7 +27,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEdit_4->setText("home/dev/state");
     ui->pushButton_2->setText("开灯");
 
-    // 默认显示磁贴主页
     ui->stackedWidget->setCurrentIndex(0);
 
     // MQTT 客户端
@@ -36,26 +40,41 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lineEdit_fan->setText(QString::number(fan.get_speed()));
 
     // LED 初始全灭
-    HardwareController::allLED(0);
-    HardwareController::setUserLED(1, 0);
-    HardwareController::setUserLED(2, 0);
+    hw.allLED(0);
+    hw.setUserLED(1, 0);
+    hw.setUserLED(2, 0);
+
+    // ============================================================
+    // 【关键】构造函数中先读一次传感器实际值，初始化 last*
+    // 避免首次 update_all() 因 last* 与实际值不一致而误触发
+    // ============================================================
+    lastKey1   = readKey1();
+    lastKey2   = readKey2();
+    lastKey3   = readKey3();
+    lastPeople = readPeople();   // ← 红外上次值初始化
+    lastGate   = readGate();
+
+    log(QString("【系统】传感器初始状态: KEY1=%1 KEY2=%2 KEY3=%3 人体=%4 门禁=%5")
+        .arg(lastKey1).arg(lastKey2).arg(lastKey3)
+        .arg(lastPeople).arg(lastGate));
 
     // 1 秒定时器
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::update_all);
     timer->start(1000);
 
-    update_all();
-    ui->textEdit->append("【系统】程序已启动，等待连接服务器...");
+    update_all();   // 首次刷新 UI，但不做边缘检测
+
+    log("【系统】程序已启动，等待连接服务器...");
 }
 
 MainWindow::~MainWindow()
 {
     fan.stop();
-    HardwareController::stopAlarm();
-    HardwareController::allLED(0);
-    HardwareController::setUserLED(1, 0);
-    HardwareController::setUserLED(2, 0);
+    hw.stopAlarm();
+    hw.allLED(0);
+    hw.setUserLED(1, 0);
+    hw.setUserLED(2, 0);
 
     if (came_page) { delete came_page; came_page = nullptr; }
     if (fanbox)    { delete fanbox;    fanbox    = nullptr; }
@@ -63,83 +82,208 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-// ==================== 定时采集与场景联动 ====================
+// ============================================================
+// 日志
+// ============================================================
+void MainWindow::log(const QString &msg)
+{
+    QString line = QString("[%1] %2")
+        .arg(QDateTime::currentDateTime().toString("hh:mm:ss"))
+        .arg(msg);
+    ui->textEdit->append(line);
+    qDebug() << line;
+}
+
+// ============================================================
+// 定时采集与场景联动
+// ============================================================
 void MainWindow::update_all()
 {
+    // ---------- 1. 读取传感器 ----------
     int    lightVal = light.get_light();
     double temp     = temphum.get_temp();
     double hum      = temphum.get_hum();
     int    fanSpeed = fan.get_speed();
 
-    // 监控页显示
+    // ---------- 2. 刷新 UI ----------
     ui->lineEdit_light->setText(lightVal < 0 ? "Error" : QString::number(lightVal));
     ui->lineEdit_temp->setText(QString::number(temp, 'f', 2));
     ui->lineEdit_hum->setText(QString::number(hum,  'f', 2));
     ui->lineEdit_fan->setText(QString::number(fanSpeed));
 
-    // 主页顶部状态栏
     ui->status_temp->setText(QString("温度: %1 °C").arg(temp, 0, 'f', 1));
     ui->status_hum->setText(QString("湿度: %1 %").arg(hum, 0, 'f', 1));
     ui->status_light->setText(QString("光照: %1").arg(lightVal));
     ui->status_fan->setText(QString("风扇: %1").arg(fanSpeed));
 
-    // GPIO
+    // ---------- 3. 读取 GPIO ----------
     int key1   = readKey1();
     int key2   = readKey2();
     int key3   = readKey3();
-    int people = readPeople();
+    int people = readPeople();   // ← 红外：1=无人，0=有人
     int gate   = readGate();
 
-    if (lastKey1 == 1 && key1 == 0) {
-        ui->textEdit->append("【KEY1】按下 → 回家模式");
-        HardwareController::allLED(255);
-        HardwareController::setUserLED(1, 255);
-        fan.set_speed(150);
-        fan.start();
-        sendEvent("home/scene/mode", "home_mode");
-    }
-    if (lastKey2 == 1 && key2 == 0) {
-        ui->textEdit->append("【KEY2】按下 → 观影模式");
-        HardwareController::setLED(1, 30);
-        HardwareController::setLED(2, 0);
-        HardwareController::setLED(3, 0);
-        HardwareController::setUserLED(1, 0);
-        sendEvent("home/scene/mode", "movie_mode");
-    }
-    if (lastKey3 == 1 && key3 == 0) {
-        ui->textEdit->append("【KEY3】按下 → 离家模式");
-        HardwareController::allLED(0);
-        HardwareController::setUserLED(1, 0);
-        HardwareController::setUserLED(2, 0);
-        fan.stop();
-        sendEvent("home/scene/mode", "away_mode");
-    }
-    if (lastPeople == 1 && people == 0) {
-        ui->textEdit->append("【人体红外】检测到人 → 迎宾模式");
-        HardwareController::setUserLED(2, 255);
-        sendEvent("home/sensor/people", "people_detected");
-    }
-    if (lastPeople == 0 && people == 1) {
-        ui->textEdit->append("【人体红外】人已离开");
-        HardwareController::setUserLED(2, 0);
-        sendEvent("home/sensor/people", "people_left");
-    }
-    if (lastGate == 1 && gate == 0) {
-        ui->textEdit->append("【门禁/火焰】⚠️ 触发报警！");
-        HardwareController::triggerAlarm();
-        HardwareController::allLED(255);
-        sendEvent("home/sensor/gate", "gate_alarm");
+    // ---------- 4. 边缘检测 ----------
+    if (!firstRun) {
+
+        // ============ KEY1：回家模式 ============
+        if (lastKey1 == 1 && key1 == 0) {
+            log("【KEY1】按下 → 回家模式");
+            enterHomeMode();
+            sendEvent("home/scene/mode", "home_mode");
+        }
+
+        // ============ KEY2：观影模式 ============
+        if (lastKey2 == 1 && key2 == 0) {
+            log("【KEY2】按下 → 观影模式");
+            enterMovieMode();
+            sendEvent("home/scene/mode", "movie_mode");
+        }
+
+        // ============ KEY3：离家模式 ============
+        if (lastKey3 == 1 && key3 == 0) {
+            log("【KEY3】按下 → 离家模式");
+            enterAwayMode();
+            sendEvent("home/scene/mode", "away_mode");
+        }
+
+        // ============================================================
+        // 【核心】红外检测：输出 1=无人，输出 0=检测到人
+        // 下降沿 1 → 0 触发报警
+        // ============================================================
+        if (lastPeople == 1 && people == 0) {
+            log("【人体红外】⚠️ 检测到人 → 触发报警！");
+            handlePeopleAlarm();
+            sendEvent("home/sensor/people", "people_alarm");
+        }
+
+        // 上升沿 0 → 1：人离开
+        if (lastPeople == 0 && people == 1) {
+            log("【人体红外】人已离开");
+            // 如果红外报警还在激活，主动停止
+            if (peopleAlarmActive) {
+                peopleAlarmActive = false;
+                tryStopAlarm();
+            }
+            sendEvent("home/sensor/people", "people_left");
+        }
+
+        // ============ 门禁报警 ============
+        if (!gateAlarmActive && lastGate == 1 && gate == 0) {
+            log("【门禁/火焰】⚠️ 触发报警！");
+            handleGateAlarm();
+            sendEvent("home/sensor/gate", "gate_alarm");
+        }
+
+        if (gateAlarmActive && lastGate == 0 && gate == 1) {
+            gateAlarmActive = false;
+            tryStopAlarm();
+            log("【门禁/火焰】已恢复，报警可再次触发");
+        }
     }
 
-    lastKey1 = key1; lastKey2 = key2; lastKey3 = key3;
-    lastPeople = people; lastGate = gate;
+    // ---------- 5. 更新 last*（只有有效值才更新）----------
+    if (key1   >= 0) lastKey1   = key1;
+    if (key2   >= 0) lastKey2   = key2;
+    if (key3   >= 0) lastKey3   = key3;
+    if (people >= 0) lastPeople = people;
+    if (gate   >= 0) lastGate   = gate;
 
+    // 首次运行结束
+    if (firstRun) {
+        firstRun = false;
+        log("【系统】首次初始化完成，开始边缘检测");
+    }
+
+    // ---------- 6. MQTT 上报 ----------
     if (client->state() == QMqttClient::Connected) {
         publishSensorData();
     }
 }
 
-// ==================== 数据上报 ====================
+// ============================================================
+// 报警处理
+// ============================================================
+
+// 门禁报警
+void MainWindow::handleGateAlarm()
+{
+    if (gateAlarmActive) return;
+
+    hw.triggerAlarm();          // 蜂鸣器 + 震动马达
+    hw.allLED(255);             // 所有 LED 全亮
+    gateAlarmActive = true;
+
+    QTimer::singleShot(5000, this, [this]() {
+        if (gateAlarmActive) {
+            gateAlarmActive = false;
+            tryStopAlarm();
+            log("【系统】门禁报警自动停止（5 秒超时）");
+        }
+    });
+}
+
+// 【核心】红外报警：gpioget 5 12 输出 0 时触发
+void MainWindow::handlePeopleAlarm()
+{
+    if (peopleAlarmActive) return;   // 已在报警，避免重复触发
+
+    hw.triggerAlarm();          // 蜂鸣器 1kHz + 震动马达
+    hw.allLED(255);             // 3 路系统 LED 全亮
+    peopleAlarmActive = true;
+
+    // 5 秒后自动停止，防止长时间鸣叫损坏硬件
+    QTimer::singleShot(5000, this, [this]() {
+        if (peopleAlarmActive) {
+            peopleAlarmActive = false;
+            tryStopAlarm();
+            log("【系统】红外报警自动停止（5 秒超时）");
+        }
+    });
+}
+
+// 尝试停止报警：只有当所有报警源都停止时才真正关闭硬件
+void MainWindow::tryStopAlarm()
+{
+    if (!gateAlarmActive && !peopleAlarmActive) {
+        hw.stopAlarm();       // 停止蜂鸣器 + 震动
+        hw.allLED(0);         // LED 全灭
+        log("【系统】报警已停止");
+    }
+}
+
+// ============================================================
+// 场景模式
+// ============================================================
+void MainWindow::enterHomeMode()
+{
+    hw.allLED(255);
+    hw.setUserLED(1, 255);
+    fan.set_speed(150);
+    fan.start();
+    update_all();
+}
+
+void MainWindow::enterMovieMode()
+{
+    hw.setLED(1, 30);
+    hw.setLED(2, 0);
+    hw.setLED(3, 0);
+    hw.setUserLED(1, 0);
+}
+
+void MainWindow::enterAwayMode()
+{
+    hw.allLED(0);
+    hw.setUserLED(1, 0);
+    hw.setUserLED(2, 0);
+    fan.stop();
+    update_all();
+}
+
+// ============================================================
+// MQTT 上报
+// ============================================================
 void MainWindow::publishSensorData()
 {
     QJsonObject data;
@@ -148,13 +292,14 @@ void MainWindow::publishSensorData()
     data["humidity"]    = temphum.get_hum();
     data["light"]       = light.get_light();
     data["fan"]         = fan.get_speed();
-    data["pot1"] = HardwareController::readFileValue("/sys/bus/iio/devices/iio:device3/in_voltage0_raw");
-    data["pot2"] = HardwareController::readFileValue("/sys/bus/iio/devices/iio:device3/in_voltage1_raw");
+    data["pot1"]        = hw.readPot(1);
+    data["pot2"]        = hw.readPot(2);
     data["key1"]   = (readKey1()   == 0) ? 1 : 0;
     data["key2"]   = (readKey2()   == 0) ? 1 : 0;
     data["key3"]   = (readKey3()   == 0) ? 1 : 0;
-    data["people"] = (readPeople() == 0) ? 1 : 0;
+    data["people"] = (readPeople() == 0) ? 1 : 0;   // 1=有人，0=无人
     data["gate"]   = (readGate()   == 0) ? 1 : 0;
+    data["alarm"]  = (gateAlarmActive || peopleAlarmActive) ? 1 : 0;
 
     client->publish(QMqttTopicName("home/sensor/state"),
                     QJsonDocument(data).toJson(QJsonDocument::Compact));
@@ -170,7 +315,9 @@ void MainWindow::sendEvent(const QString &topic, const QString &event)
                     QJsonDocument(obj).toJson(QJsonDocument::Compact));
 }
 
-// ==================== 磁贴主页 ====================
+// ============================================================
+// 磁贴主页
+// ============================================================
 void MainWindow::on_cam_clicked()
 {
     if (came_page == nullptr) {
@@ -185,8 +332,8 @@ void MainWindow::on_cam_clicked()
 void MainWindow::on_light_clicked()
 {
     ledState = !ledState;
-    HardwareController::allLED(ledState ? 255 : 0);
-    ui->textEdit->append(QString("【磁贴】灯光 %1").arg(ledState ? "开" : "关"));
+    hw.allLED(ledState ? 255 : 0);
+    log(QString("【磁贴】灯光 %1").arg(ledState ? "开" : "关"));
 }
 
 void MainWindow::on_fan_pushbutton_clicked()
@@ -203,49 +350,49 @@ void MainWindow::on_fan_pushbutton_clicked()
 
 void MainWindow::on_alarm_button_clicked()
 {
-    HardwareController::triggerAlarm();
-    HardwareController::allLED(255);
-    ui->textEdit->append("【磁贴】⚠️ 报警已触发");
+    hw.triggerAlarm();
+    hw.allLED(255);
+    gateAlarmActive = true;
+    log("【磁贴】⚠️ 报警已触发");
+
+    QTimer::singleShot(5000, this, [this]() {
+        if (gateAlarmActive) {
+            gateAlarmActive = false;
+            tryStopAlarm();
+            log("【系统】报警自动停止（5 秒超时）");
+        }
+    });
 }
 
 void MainWindow::on_home_mode_btn_clicked()
 {
-    HardwareController::allLED(255);
-    HardwareController::setUserLED(1, 255);
-    fan.set_speed(150);
-    fan.start();
-    update_all();
-    ui->textEdit->append("【场景】回家模式");
+    enterHomeMode();
+    log("【场景】回家模式");
 }
 
 void MainWindow::on_movie_mode_btn_clicked()
 {
-    HardwareController::setLED(1, 30);
-    HardwareController::setLED(2, 0);
-    HardwareController::setLED(3, 0);
-    HardwareController::setUserLED(1, 0);
-    ui->textEdit->append("【场景】观影模式");
+    enterMovieMode();
+    log("【场景】观影模式");
 }
 
 void MainWindow::on_away_mode_btn_clicked()
 {
-    HardwareController::allLED(0);
-    HardwareController::setUserLED(1, 0);
-    HardwareController::setUserLED(2, 0);
-    fan.stop();
-    update_all();
-    ui->textEdit->append("【场景】离家模式");
+    enterAwayMode();
+    log("【场景】离家模式");
 }
 
 void MainWindow::on_all_off_btn_clicked()
 {
-    HardwareController::allLED(0);
-    HardwareController::setUserLED(1, 0);
-    HardwareController::setUserLED(2, 0);
-    HardwareController::stopAlarm();
+    hw.allLED(0);
+    hw.setUserLED(1, 0);
+    hw.setUserLED(2, 0);
+    hw.stopAlarm();
     fan.stop();
+    gateAlarmActive   = false;
+    peopleAlarmActive = false;
     update_all();
-    ui->textEdit->append("【场景】全部关闭");
+    log("【场景】全部关闭");
 }
 
 void MainWindow::on_btn_switch_to_monitor_clicked()
@@ -253,7 +400,9 @@ void MainWindow::on_btn_switch_to_monitor_clicked()
     ui->stackedWidget->setCurrentIndex(1);
 }
 
-// ==================== 监控页 ====================
+// ============================================================
+// 监控页
+// ============================================================
 void MainWindow::on_btn_switch_to_home_clicked()
 {
     ui->stackedWidget->setCurrentIndex(0);
@@ -276,7 +425,7 @@ void MainWindow::connectSuccess()
 {
     QMessageBox::about(this, "提示", "连接服务器成功");
     ui->pushButton->setText("断开");
-    ui->textEdit->append("【系统】已连接 MQTT 服务器");
+    log("【系统】已连接 MQTT 服务器");
 }
 
 void MainWindow::on_pushButton_2_clicked()
@@ -291,9 +440,9 @@ void MainWindow::on_pushButton_2_clicked()
     cmd["id"]   = 0;
     client->publish(QMqttTopicName(ui->lineEdit_3->text()),
                     QJsonDocument(cmd).toJson(QJsonDocument::Compact));
-    HardwareController::allLED(turnOn ? 255 : 0);
+    hw.allLED(turnOn ? 255 : 0);
     ui->pushButton_2->setText(turnOn ? "关灯" : "开灯");
-    ui->textEdit->append(turnOn ? "【发送】开灯" : "【发送】关灯");
+    log(turnOn ? "【发送】开灯" : "【发送】关灯");
 }
 
 void MainWindow::on_pushButton_3_clicked()
@@ -308,13 +457,13 @@ void MainWindow::on_pushButton_3_clicked()
     }
     client->subscribe(ui->lineEdit_4->text());
     isSubscribed = true;
-    ui->textEdit->append("【系统】已订阅主题: " + ui->lineEdit_4->text());
+    log("【系统】已订阅主题: " + ui->lineEdit_4->text());
 }
 
 void MainWindow::recv_data(const QByteArray &mess, const QMqttTopicName &topic)
 {
-    ui->textEdit->append(QString("【%1】 %2")
-                         .arg(topic.name()).arg(QString::fromUtf8(mess)));
+    log(QString("【%1】 %2")
+        .arg(topic.name()).arg(QString::fromUtf8(mess)));
     QJsonDocument doc = QJsonDocument::fromJson(mess);
     if (doc.isObject()) handleCommand(doc.object());
 }
@@ -334,25 +483,30 @@ void MainWindow::handleCommand(const QJsonObject &cmd)
     else if (action == "set_led") {
         int id    = cmd["id"].toInt(-1);
         int value = cmd["value"].toInt(255);
-        if (id >= 1 && id <= 3) HardwareController::setLED(id, value);
-        else if (id == 10) HardwareController::setUserLED(1, value);
-        else if (id == 11) HardwareController::setUserLED(2, value);
+        if (id >= 1 && id <= 3) hw.setLED(id, value);
+        else if (id == 10)      hw.setUserLED(1, value);
+        else if (id == 11)      hw.setUserLED(2, value);
     }
     else if (action == "all_led") {
         int value = cmd["value"].toInt(255);
-        HardwareController::allLED(value);
+        hw.allLED(value);
     }
     else if (action == "alarm") {
-        HardwareController::triggerAlarm();
-        HardwareController::allLED(255);
+        hw.triggerAlarm();
+        hw.allLED(255);
+        gateAlarmActive = true;
+        log("【MQTT】收到报警指令");
     }
     else if (action == "stop_alarm") {
-        HardwareController::stopAlarm();
-        HardwareController::allLED(0);
+        gateAlarmActive   = false;
+        peopleAlarmActive = false;
+        hw.stopAlarm();
+        hw.allLED(0);
+        log("【MQTT】收到停止报警指令");
     }
     else if (cmd.contains("lamp")) {
         bool lampState = cmd["lamp"].toBool();
-        HardwareController::allLED(lampState ? 255 : 0);
+        hw.allLED(lampState ? 255 : 0);
     }
 }
 
@@ -374,7 +528,9 @@ void MainWindow::on_pushButton_plus_clicked()
     ui->lineEdit_fan->setText(QString::number(val));
 }
 
-// ==================== 子界面返回 ====================
+// ============================================================
+// 子界面返回
+// ============================================================
 void MainWindow::showMainWindow()
 {
     this->show();
@@ -383,5 +539,5 @@ void MainWindow::showMainWindow()
 void MainWindow::onFanSpeedChanged(int speed)
 {
     ui->lineEdit_fan->setText(QString::number(speed));
-    ui->textEdit->append(QString("【风扇界面】速度调整为 %1").arg(speed));
+    log(QString("【风扇界面】速度调整为 %1").arg(speed));
 }

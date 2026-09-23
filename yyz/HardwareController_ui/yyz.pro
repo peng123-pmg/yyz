@@ -14,6 +14,8 @@ SOURCES += \
 
 HEADERS += \
     HardwareController.h \
+    Beeper.h \
+    Vibrator.h \
     light.h \
     Fan.h \
     temp_hum.h \
