@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>460</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>400</width>
+    <height>300</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>人脸识别门禁系统</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow, QWidget#centralWidget {
+    background-color: #181a1d;
+}
+QLabel#videoLabel {
+    background-color: #0f1114;
+    border: 1px solid #2b2f35;
+    border-radius: 8px;
+    color: #6b7280;
+    font-size: 14px;
+}
+QLabel#recogLabel {
+    background-color: #22252a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 20px;
+    font-weight: bold;
+}
+QLabel#stateDot {
+    border-radius: 5px;
+}
+QLabel#statusLabel {
+    color: #9aa0a8;
+    font-size: 12px;
+    background: transparent;
+}
+QFrame#controlFrame {
+    background-color: #22252a;
+    border: 1px solid #2b2f35;
+    border-radius: 8px;
+}
+QComboBox#deviceCombo {
+    background-color: #181a1d;
+    border: 1px solid #33373d;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #e8eaed;
+    min-width: 140px;
+}
+QComboBox#deviceCombo:hover {
+    border-color: #3b82f6;
+}
+QComboBox#deviceCombo:focus {
+    border-color: #3b82f6;
+}
+QComboBox#deviceCombo::drop-down {
+    border: none;
+    width: 26px;
+}
+QComboBox#deviceCombo QAbstractItemView {
+    background-color: #22252a;
+    color: #e8eaed;
+    selection-background-color: #2f5d9a;
+    border: 1px solid #33373d;
+    outline: none;
+}
+QPushButton#startButton {
+    background-color: #2ea56c;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-weight: bold;
+    font-size: 13px;
+}
+QPushButton#startButton:hover {
+    background-color: #35b878;
+}
+QPushButton#startButton:pressed {
+    background-color: #278e5d;
+}
+QPushButton#startButton:disabled {
+    background-color: #1f3a2d;
+    color: #6f8a7b;
+}
+QPushButton#stopButton {
+    background-color: #e05252;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-weight: bold;
+    font-size: 13px;
+}
+QPushButton#stopButton:hover {
+    background-color: #ea6363;
+}
+QPushButton#stopButton:pressed {
+    background-color: #c84747;
+}
+QPushButton#stopButton:disabled {
+    background-color: #3a2323;
+    color: #a37b7b;
+}
+QPushButton#adminButton {
+    background-color: #3b82f6;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-weight: bold;
+    font-size: 13px;
+}
+QPushButton#adminButton:hover {
+    background-color: #4b8df5;
+}
+QPushButton#adminButton:pressed {
+    background-color: #3270d6;
+}</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="mainLayout">
+    <property name="leftMargin">
+     <number>12</number>
+    </property>
+    <property name="topMargin">
+     <number>12</number>
+    </property>
+    <property name="rightMargin">
+     <number>12</number>
+    </property>
+    <property name="bottomMargin">
+     <number>12</number>
+    </property>
+    <property name="spacing">
+     <number>10</number>
+    </property>
+    <item>
+     <widget class="QLabel" name="videoLabel">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>320</width>
+        <height>240</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>请选择设备并点击「开始」</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="recogLabel">
+      <property name="text">
+       <string>未检测到人脸</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QFrame" name="controlFrame">
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <layout class="QHBoxLayout" name="ctrlLayout">
+       <property name="leftMargin">
+        <number>12</number>
+       </property>
+       <property name="topMargin">
+        <number>8</number>
+       </property>
+       <property name="rightMargin">
+        <number>12</number>
+       </property>
+       <property name="bottomMargin">
+        <number>8</number>
+       </property>
+       <property name="spacing">
+        <number>10</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="deviceLabel">
+         <property name="text">
+          <string>设备</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="deviceCombo">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="editable">
+          <bool>true</bool>
+         </property>
+         <property name="toolTip">
+          <string>摄像头设备节点，可手动输入其它路径</string>
+         </property>
+         <item>
+          <property name="text">
+           <string>/dev/video1</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="startButton">
+         <property name="text">
+          <string>开始</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="stopButton">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>停止</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="adminButton">
+         <property name="text">
+          <string>成员管理</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="statusRow">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="stateDot">
+        <property name="minimumSize">
+         <size>
+          <width>10</width>
+          <height>10</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>10</width>
+          <height>10</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="statusLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>就绪</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
