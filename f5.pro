@@ -14,12 +14,17 @@ SOURCES += \
     mainwindow.cpp
 
 HEADERS += \
+    Beeper.h \
     Fan.h \
+    Vibrator.h \
     camera.h \
     devicecontrol.h \
     fandialog.h \
     hardware_def.h \
-    mainwindow.h
+    leds.h \
+    mainwindow.h \
+    phtotosens.h \
+    temp_hum.h
 
 FORMS += \
     camera.ui \
